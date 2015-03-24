@@ -38,36 +38,23 @@ angular.module('dibari.angular-ellipsis',[])
 				function buildEllipsis() {
 					if (typeof(scope.ngBind) !== 'undefined') {
 						var bindArray = scope.ngBind.split(" "),
-							i = 0,
 							ellipsisSymbol = (typeof(attributes.ellipsisSymbol) !== 'undefined') ? attributes.ellipsisSymbol : '&hellip;',
 							appendString = (typeof(scope.ellipsisAppend) !== 'undefined' && scope.ellipsisAppend !== '') ? ellipsisSymbol + '<span>' + scope.ellipsisAppend + '</span>' : ellipsisSymbol;
 
 						attributes.isTruncated = false;
 						element.html(scope.ngBind);
 
-						// If text has overflow
-						if (isOverflowed(element)) {
-							var bindArrayStartingLength = bindArray.length,
-								initialMaxHeight = element[0].clientHeight;
+						var desiredHeight = element[0].clientHeight;
+						var actualHeight = element[0].scrollHeight;
+						if (actualHeight > desiredHeight) {
+							var size = Math.floor(bindArray.length * desiredHeight / actualHeight);
+							var text = bindArray.slice(0, size).join(' ');
 
-							element.html(scope.ngBind + appendString);
-
-							// Set complete text and remove one word at a time, until there is no overflow
-							for ( ; i < bindArrayStartingLength; i++) {
-								bindArray.pop();
-								element.html(bindArray.join(" ") + appendString);
-
-								if (element[0].scrollHeight < initialMaxHeight || isOverflowed(element) === false) {
-									attributes.isTruncated = true;
-									break;
-								}
-							}
-
-							// If append string was passed and append click function included
-							if (ellipsisSymbol != appendString && typeof(scope.ellipsisAppendClick) !== 'undefined' && scope.ellipsisAppendClick !== '' ) {
-								element.find('span').bind("click", function (e) {
-									scope.$apply(scope.ellipsisAppendClick);
-								});
+							element.html(text + appendString);
+							while (isOverflowed(element) && size > 0) {
+								--size;
+								text = text.substr(0, text.length - bindArray[size].length - 1);
+								element.html(text + appendString);
 							}
 						}
 					}
@@ -89,37 +76,35 @@ angular.module('dibari.angular-ellipsis',[])
 				*	Watchers
 				*/
 
-				   /**
-					*	Execute ellipsis truncate on ngBind update
-					*/
-					scope.$watch('ngBind', function () {
-						buildEllipsis();
-					});
+			   /**
+				*	Execute ellipsis truncate on ngBind update
+				*/
+				scope.$watch('ngBind', function () {
+					buildEllipsis();
+				});
 
-				   /**
-					*	Execute ellipsis truncate on ngBind update
-					*/
-					scope.$watch('ellipsisAppend', function () {
-						buildEllipsis();
-					});
+			   /**
+				*	Execute ellipsis truncate on ngBind update
+				*/
+				scope.$watch('ellipsisAppend', function () {
+					buildEllipsis();
+				});
 
-				   /**
-					*	When window width or height changes - re-init truncation
-					*/
-					angular.element($window).bind('resize', function () {
-						$timeout.cancel(attributes.lastWindowTimeoutEvent);
+			   /**
+				*	When window width or height changes - re-init truncation
+				*/
+				angular.element($window).bind('resize', function () {
+					$timeout.cancel(attributes.lastWindowTimeoutEvent);
 
-						attributes.lastWindowTimeoutEvent = $timeout(function() {
-							if (attributes.lastWindowResizeWidth != window.innerWidth || attributes.lastWindowResizeHeight != window.innerHeight) {
-								buildEllipsis();
-							}
+					attributes.lastWindowTimeoutEvent = $timeout(function() {
+						if (attributes.lastWindowResizeWidth != window.innerWidth || attributes.lastWindowResizeHeight != window.innerHeight) {
+							buildEllipsis();
+						}
 
-							attributes.lastWindowResizeWidth = window.innerWidth;
-							attributes.lastWindowResizeHeight = window.innerHeight;
-						}, 75);
-					});
-
-
+						attributes.lastWindowResizeWidth = window.innerWidth;
+						attributes.lastWindowResizeHeight = window.innerHeight;
+					}, 75);
+				});
 			};
 		}
 	};
