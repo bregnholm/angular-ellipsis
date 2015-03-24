@@ -57,6 +57,13 @@ angular.module('dibari.angular-ellipsis',[])
 								element.html(text + appendString);
 							}
 						}
+	
+						// If append string was passed and append click function included
+						if (ellipsisSymbol != appendString && typeof(scope.ellipsisAppendClick) !== 'undefined' && scope.ellipsisAppendClick !== '' ) {
+							element.find('span').bind("click", function (e) {
+								scope.$apply(scope.ellipsisAppendClick);
+							});
+						}
 					}
 				}
 
